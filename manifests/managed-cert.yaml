@@ -1,0 +1,8 @@
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: myproperty-essa-cert
+spec:
+  domains:
+    - myproperty-essa.com
+    - keycloak.myproperty-essa.com
