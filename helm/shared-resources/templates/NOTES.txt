@@ -1,0 +1,20 @@
+SHARED-RESOURCES HELM CHART NOTES
+=================================
+
+Purpose:
+--------
+This chart deploys shared infrastructure for microservices, including:
+- Ingress for routing external traffic
+- GKE ManagedCertificate for TLS
+
+Usage:
+------
+- When deploying a new microservice:
+  - Add its subdomain to the ManagedCertificate and configure it in the GCP console (see main repo README for details)
+  - Add a routing rule for the new subdomain in the Ingress template
+- This chart is independent of individual microservices and should be deployed before them
+
+Notes:
+------
+- Helm manages these resources; old standalone manifests should be removed after deployment
+- Can be updated as new services or subdomains are added

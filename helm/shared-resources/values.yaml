@@ -1,0 +1,19 @@
+ingress:
+  enabled: true
+  mainHost: myproperty-essa.com
+  annotations:
+    kubernetes.io/ingress.class: "gce"  # Tells GKE to use its own Ingress Controller (required when setting annotations)
+    kubernetes.io/ingress.global-static-ip-name: myproperty-essa-ip    # bind ingress to reserved static IP
+    networking.gke.io/managed-certificates: myproperty-essa-cert       # bind GKE-managed certicate
+    kubernetes.io/ingress.allow-http: "false"
+
+  # keycloak
+  services:
+    keycloak:
+      host: keycloak.myproperty-essa.com
+      serviceName: keycloak-service
+      servicePort: 8080
+    api:
+      host: api.myproperty-essa.com
+      serviceName: api-service
+      servicePort: 8080

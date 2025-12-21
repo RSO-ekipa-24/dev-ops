@@ -1,0 +1,22 @@
+{{- if .Values.ingress.services }}
+{{- range $name, $svc := .Values.ingress.services }}
+apiVersion: v1
+kind: Pod
+metadata:
+  name: test-connection-{{ $name }}
+  annotations:
+    helm.sh/hook: test
+    helm.sh/hook-delete-policy: hook-succeeded,hook-failed
+spec:
+  containers:
+    - name: curl
+      image: curlimages/curl:7.88.1
+      command:
+        - sh
+        - -c
+        - |
+          curl -f http://{{ $svc.serviceName }}:{{ $svc.servicePort }} || exit 1
+  restartPolicy: Never
+---
+{{- end }}
+{{- end }}
