@@ -11,7 +11,7 @@ metadata:
   {{- end }}
 spec:
   rules:
-    - host: {{ .Values.ingress.host }}
+    - host: {{ .Values.ingress.services.keycloak.host }}
       http:
         paths:
           - path: /
@@ -21,4 +21,14 @@ spec:
                 name: {{ .Values.ingress.services.keycloak.serviceName }}
                 port:
                   number: {{ .Values.ingress.services.keycloak.servicePort }}
+    - host: {{ .Values.ingress.services.core.host }}
+      http:
+        paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: core-service
+                  port:
+                    number: 8080
 {{- end }}

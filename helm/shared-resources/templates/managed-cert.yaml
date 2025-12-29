@@ -6,3 +6,4 @@ spec:
   domains:
     - myproperty-essa.com
     - keycloak.myproperty-essa.com
+    - core.myproperty-essa.com

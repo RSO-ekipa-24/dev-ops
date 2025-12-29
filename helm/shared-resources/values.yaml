@@ -13,7 +13,7 @@ ingress:
       host: keycloak.myproperty-essa.com
       serviceName: keycloak-service
       servicePort: 8080
-    api:
-      host: api.myproperty-essa.com
-      serviceName: api-service
+    core:
+      host: core.myproperty-essa.com
+      serviceName: core-service
       servicePort: 8080
