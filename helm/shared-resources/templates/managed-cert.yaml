@@ -1,7 +1,7 @@
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate
 metadata:
-  name: myproperty-essa-cert
+  name: myproperty-essa-cert-v2
 spec:
   domains:
     - myproperty-essa.com

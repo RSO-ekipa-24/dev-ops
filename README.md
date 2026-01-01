@@ -191,15 +191,34 @@ Our main domain is: `myproperty-essa.com`. Any subdomains need to follow the fol
 
 Follow these steps to esure your new subdomain is correctly routed and secured with a **Google managed certificate**:
 
-#### 1. Update the **Managed certificate file** `./manifests/managed-cert.yaml`.
+#### 1. DELETE the old certificate!!
 
-Note: Google-managed certificates do **not** support wildcarss - each subdomain must be listed explicitly.
+Certificate files are immutable, so we need to delete the existing one and apply a new one!  You can delete the existing certificate by running:
+
+```bash
+kubectl get managedcertificate
+```
+
+This shows the name of the current certificate in use. 
+
+Delete it:
+
+```bash
+kubectl delete managedcertificate <name>
+```
+
+
+#### 2. Update the **Managed certificate manifest** `./helm/shared-resources/templates/managed-cert.yaml`.
+
+Note: Google-managed certificates do **not** support wildcards - each subdomain must be listed explicitly.
+
+Its the best to also change the name of the certificate, so ingress will propagate the change!
 
 ```yaml
 apiVersion: networking.gke.io/v1
 kind: ManagedCertificate```
 metadata:
-  name: myproperty-essa-cert
+  name: <change-nmae>
 spec:
   domains:
     - myproperty-essa.com
@@ -207,13 +226,7 @@ spec:
     - new-subdomain.myproperty-essa.com # <-- add your new domain here
 ```
 
-Apply the change (make sure you are in the manifests folder or change the path):
-
-```bash
-kubectl apply -f managed-cert.yaml
-```
-
-#### 2. Update DNS records (Cloud DNS inside [Google console](https://console.cloud.google.com/net-services/dns/zones/myproperty-essa-com/details?hl=en&project=artful-reactor-351917)):
+#### 3. Update DNS records (Cloud DNS inside [Google console](https://console.cloud.google.com/net-services/dns/zones/myproperty-essa-com/details?hl=en&project=artful-reactor-351917)):
 
 You must point the subdomain to your Load Balancer's Static IP
 
@@ -226,9 +239,9 @@ You must point the subdomain to your Load Balancer's Static IP
   our GKE static IP 35.190.18.204)
 - Click `Create`
 
-#### 3. Match the Ingress
+#### 4. Match the Ingress
 
-Update your Ingress manifest to include the new host and route it to the correct service
+Update your Ingress manifest to include the new host and route it to the correct service. This is done through `values.yaml`
 
 ```yaml                                             
 
@@ -237,7 +250,7 @@ kind: Ingress
 metadata:
   name: main-ingress
   annotations:
-    networking.gke.io/managed-certificates: "my-managed-cert"
+    networking.gke.io/managed-certificates: <new-certificate-name>
     kubernetes.io/ingress.class: "gce"
 spec:
   rules:
@@ -254,9 +267,37 @@ spec:
 
 ```
 
-Deploy the Ingress using Helm together with other resources.
+#### 5. Deploy the Ingress using Helm together with other resources
 
-#### 4. Verification and troubleshooting
+```bash
+helm upgrade shared-resources ./shared-resources
+```
+
+This should reapply the new certificate and add new host to ingress. 
+
+#### 6. Important checks 
+
+After the helm command, check if all the changes went through:
+
+```bash
+kubectl describe ingress shared-resources-ingress 
+```
+
+Make sure new subdomain is listed under the hosts and most importantly, check this line:
+`networking.gke.io/managed-certificates: myproperty-essa-cert-v2`  This needs to include the updated name of the new Managed certificate file!
+
+If you see the old name, then you need to run this command to ensure ingress will use new certificate:
+
+```bash
+kubectl annotate ingress shared-resources-ingress \
+  networking.gke.io/managed-certificates=<new-cert-name> \
+  -n essa-project \
+  --overwrite
+```
+
+Then check if changes went through as expected!
+
+#### 7. Verification and troubleshooting
 
 **NOTE: Google validation can take 30 - 120 min**.
 
@@ -274,5 +315,7 @@ Use these commands and sites to check your progress and if everything is set up 
 
 - [DNS Checker](https://dnschecker.org/#A/keycloak.myproperty-essa.com): Input your subdomain and check if your A record
   has propagated globally
-- [Google console](https://console.cloud.google.com/net-services/loadbalancing/list/loadBalancers?hl=en&project=artful-reactor-351917)
-  Go under **Load balancing**, select keyclo
+
+---
+
+
