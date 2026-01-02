@@ -28,9 +28,9 @@ spec:
               pathType: Prefix
               backend:
                 service:
-                  name: core-service
+                  name: {{ .Values.ingress.services.core.serviceName }}
                   port:
-                    number: 8080
+                    number: {{ .Values.ingress.services.core.servicePort }}
     - host: {{ .Values.ingress.services.files.host }}
       http:
         paths:
@@ -38,7 +38,18 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: files-service
+                name: {{ .Values.ingress.services.files.serviceName }}
                 port:
-                  number: 8080
+                  number: {{ .Values.ingress.services.files.servicePort }}
+
+    - host: {{ .Values.ingress.services.imageClassification.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.imageClassification.serviceName }}
+                port:
+                  number: {{ .Values.ingress.services.imageClassification.servicePort }}
 {{- end }}
