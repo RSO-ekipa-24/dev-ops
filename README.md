@@ -319,3 +319,81 @@ Use these commands and sites to check your progress and if everything is set up 
 ---
 
 
+## Kafka deployment using Strmzi
+
+This cluster uses **Apache Kafka managed by the Strimzi operator**. Strimzi is a Kubernetes operator that:
+
+- watches Kafka-related Custom Resources (CRs)
+- creates and manages Kafka broker pods, services and storage
+- handles rolling updates and configuration changes
+
+NOTE: Ths is **not** a separate K8s cluster. Kafka cluster refers to a **logical Kafka setup** runnning insite Kubernetes.
+
+### Components
+
+**Kafka Cluster CR (Kafka)** defines kafka-wide configuration:
+
+ - kafka version
+ - listeners (ports, TLS)
+ - replication settings
+
+**Kafka Node Pool CR (KafkaNodePool)**:
+
+- Defines **how Kafka brokers are deployed**
+- Controls number of brokers, resource limits, PVCs
+
+**Strimzi operator**
+
+- Reconciles the above CRs
+- Creates StatefulSets, Services and PVCs automatically
+
+
+### Deployment steps
+
+Here are the steps that were used for Kafka deployment in this cluster. 
+
+1. Install `Strimzi` operator
+
+This installs CRDs (Kafka, KafkaNodePool, KafkaTopic, ...) and the Strimzi operator deployment.
+
+```bash
+kubectl create -f 'https://strimzi.io/install/latest?namespace=essa-project' -n essa-project
+```
+
+2. Wait for the operator pod to be up and running (READY = 1/1)
+
+```bash
+kubectl get pods -w
+```
+
+3. Apply custom resource (CR) -  kafka cluster
+
+The Kafka CR defines cluster-level settings.
+
+Create kafka cluster manifest and configure it. Move to the `dev-ops/kafka` directory and run:
+
+```bash
+kubectl apply -f kafka-clusyer.yaml
+```
+
+4. Apply custom resource (CR) -  kafka node pool
+
+The NodePool CR defines how Kafka brokers run (replicas, storage).
+
+Create kafka node-pool manifest and configure it. Move to the `dev-ops/kafka` directory and run:
+
+```bash
+kubectl apply -f kafka-nodepool.yaml
+```
+
+Strimzi will automatically create all required Kubernetes resources. Verify them by running:
+
+```bash
+kubectl get pods
+kubectl get svc
+kubectl get pvc
+```
+
+You should se Kafka borker pods, entity operator pod, pvc and svc. 
+
+
