@@ -2,6 +2,34 @@
 
 This repo contains related configurations and README instruction files.
 
+### Branching Strategy 
+
+- main: The production-ready branch.
+- dev: The integration branch for features and fixes, often considered the "next release" branch.
+- feature/: Branches for developing new features. These branches are created from dev and merged back into dev when the feature is complete.
+- bugfix/: Branches for fixing bugs in the dev branch.
+- release/: Branches for preparing a new production release. These branches allow for last-minute fixes and preparing release notes.
+- hotfix/: Branches for fixing critical issues in the main branch. These are created from main and merged back into both main and dev.
+
+---
+
+## Authentication & Authorization (Keycloak) :closed_lock_with_key:
+
+This project uses **Keycloak** as the identity and access management solution for authentication and authorization.
+
+Keycloak provides centralized user management, secure login flows, and token-based access control (OAuth2 / OpenID Connect), which allows backend services to remain stateless and focus only on business logic.
+
+### Keycloak deployment
+
+Keycloak is deployed and managed as part of the infrastructure layer using the `keycloak-chart` **Helm chart** inside `dev-ops/helm`.
+Application developers are not required to install or upgrade Keycloak locally. Configuration and upgrades are handled centrally via the dev-ops repository.
+
+The application services rely on Keycloak-issued JWT tokens to authenticate and authorize incoming requests.
+
+---
+
+## Cloud provider :cloud: 
+
 For this project, we are using `Google Cloud` platform.
 
 We utilize the **GKE Ingress Controller** (`gce`) specifically for **Google-Managed SSL Certificates**.
@@ -15,7 +43,7 @@ We utilize the **GKE Ingress Controller** (`gce`) specifically for **Google-Mana
 
 ---
 
-## 1. Connecting to GKE (Google Kubernetes Engine) (MacOS)
+## Connecting to GKE (Google Kubernetes Engine) (MacOS) :electric_plug:
 
 1. Install `kubectl`
 
@@ -69,7 +97,7 @@ kubectl get namespaces
 
 --- 
 
-## 2. Managing the cluster
+## Managing the cluster :boom:
 
 First, switch to the `essa-project` namespace by running the following command:
 
@@ -181,7 +209,7 @@ kubectl logs <resource-name>
 
 ---
 
-## GKE Subdomains & SSL Deployment guide
+## GKE Subdomains & SSL Deployment guide :raised_hands:
 
 When deploying a new application to the cluster, you will need to create a subdomain for this service to be accessible
 on the web.
@@ -318,8 +346,7 @@ Use these commands and sites to check your progress and if everything is set up 
 
 ---
 
-
-## Kafka deployment using Strmzi
+## Kafka deployment using Strmzi  :speech_balloon:
 
 This cluster uses **Apache Kafka managed by the Strimzi operator**. Strimzi is a Kubernetes operator that:
 
@@ -394,6 +421,9 @@ kubectl get svc
 kubectl get pvc
 ```
 
-You should se Kafka borker pods, entity operator pod, pvc and svc. 
+You should se Kafka broker pods, entity operator pod, pvc and svc. 
+
+---
+
 
 

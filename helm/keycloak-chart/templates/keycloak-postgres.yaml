@@ -1,0 +1,67 @@
+# templates/postgres-db.yaml (PostgreSQL Database)
+{{- if .Values.postgres.enabled }}
+# 1. Service: Provides the stable internal hostname
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.name }} # Use fixed name for DB connection
+  labels:
+    app: {{ .Values.postgres.name }}
+spec:
+  ports:
+    - port: {{ .Values.postgres.service.port }}
+      targetPort: {{ .Values.postgres.service.port }}
+  selector:
+    app: {{ .Values.postgres.name }}
+  type: ClusterIP
+---
+# 2. StatefulSet: Manages the database pod and PVC
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.postgres.name }}
+  labels:
+    app: {{ .Values.postgres.name }}
+spec:
+  serviceName: "{{ .Values.postgres.name }}"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .Values.postgres.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.postgres.name }}
+    spec:
+      securityContext:
+        fsGroup: 1000
+      containers:
+        - name: {{ .Values.postgres.name }}
+          image: {{ .Values.postgres.image }}
+          ports:
+            - containerPort: {{ .Values.postgres.service.port }}
+          env:
+            - name: POSTGRES_DB
+              value: {{ .Values.postgres.db.databaseName }}
+            - name: POSTGRES_USER
+              value: {{ .Values.postgres.db.username }}
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secret.name }}
+                  key: {{ .Values.keycloak.secret.dbPasswordKey }}
+          volumeMounts:
+            - name: keycloak-pgdata
+              mountPath: {{ .Values.postgres.persistence.mountPath }}
+              subPath: {{ .Values.postgres.persistence.subPath }}
+  # Volume Claim Templates
+  volumeClaimTemplates:
+    - metadata:
+        name: keycloak-pgdata
+      spec:
+        accessModes:
+          - {{ .Values.postgres.persistence.accessMode }}
+        resources:
+          requests:
+            storage: {{ .Values.postgres.persistence.storage }}
+{{- end }}

@@ -1,0 +1,133 @@
+#  Keycloak Internal Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.keycloak.serviceName }}
+  labels:
+    app: {{ .Values.keycloak.name }}
+    component: service
+  annotations:
+    cloud.google.com/backend-config: '{"default": "keycloak-backend-config"}'
+spec:
+  type: {{ .Values.keycloak.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.keycloak.service.port }}
+      # Target port is where the container actually listens (default 8080)
+      targetPort: {{ .Values.keycloak.service.targetPort }}
+      protocol: {{ .Values.keycloak.service.protocol }}
+  selector:
+    app: {{ .Values.keycloak.name }}
+
+---
+
+#  Keycloak Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-{{ .Values.keycloak.name }}
+  labels:
+    app: {{ .Values.keycloak.name }}
+    component: deployment
+spec:
+  replicas: {{ .Values.keycloak.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ .Values.keycloak.name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Values.keycloak.name }}
+    spec:
+      containers:
+        - name: {{ .Values.keycloak.name }}
+          image: "{{ .Values.keycloak.image.repository }}:{{ .Values.keycloak.image.tag }}"
+          imagePullPolicy: {{ .Values.keycloak.image.pullPolicy }}
+
+          # Command and Args (Startup Configuration)
+          command:
+            - {{ index .Values.keycloak.command 0 | quote }}
+          args:
+{{ toYaml .Values.keycloak.args | nindent 12 }}
+
+          ports:
+            - name: http
+              containerPort: {{ .Values.keycloak.service.targetPort }}
+            - name: management
+              containerPort: {{ .Values.keycloak.health.port }}
+
+          # Environment Variables
+          env:
+            # --- A. Keycloak Admin Setup (Using standard variables) ---
+            - name: KEYCLOAK_ADMIN # Renamed from KC_BOOTSTRAP_ADMIN_USERNAME for standard practice
+              value: admin
+            - name: KEYCLOAK_ADMIN_PASSWORD # Renamed from KC_BOOTSTRAP_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secret.name }}
+                  key: {{ .Values.keycloak.secret.adminPasswordKey }}
+
+            # --- B. Database Configuration  ---
+            - name: KC_DB
+              value: {{ .Values.keycloak.db.name }}
+            - name: KC_DB_URL_HOST
+              value: {{ .Values.keycloak.db.host }}
+            - name: KC_DB_URL_DATABASE
+              value: {{ .Values.keycloak.db.databaseName }}
+            - name: KC_DB_USERNAME
+              value: {{ .Values.keycloak.db.username }}
+            - name: KC_DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.keycloak.secret.name }}
+                  key: {{ .Values.keycloak.secret.dbPasswordKey }}
+
+            # --- C. Reverse Proxy & Hostname Configuration ---
+            - name: KC_PROXY
+              value: {{ .Values.keycloak.env.KC_PROXY }}
+            - name: KC_HOSTNAME
+              value: {{ .Values.keycloak.env.KC_HOSTNAME }}
+            - name: KC_PROXY_ADDRESS_FORWARDING
+              value: {{ .Values.keycloak.env.KC_PROXY_ADDRESS_FORWARDING | quote }}
+            - name: KC_PROXY_HEADERS
+              value: {{ .Values.keycloak.env.KC_PROXY_HEADERS}}
+
+            # --- D. Keycloak Service Configuration ---
+            - name: KC_HTTP_ENABLED
+              value: {{ .Values.keycloak.env.KC_HTTP_ENABLED | quote }} # Should be 'true' if Ingress terminates TLS
+            - name: KC_IMPORT
+              value: {{ .Values.keycloak.realm.importPath }}
+            - name: KC_HEALTH_ENABLED
+              value: "true"
+
+          # Volume Mounting for Realm Import
+          volumeMounts:
+            - name: realm-import-volume
+              # Keycloak looks here for the realm file when using --import-realm
+              mountPath: /opt/keycloak/data/import/quarkus-realm.json
+              subPath: quarkus-realm.json # This is the file name in the ConfigMap
+
+          # Health Checks
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: {{ .Values.keycloak.health.port }}
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 20
+            failureThreshold: 10
+
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: {{ .Values.keycloak.health.port }}
+              scheme: HTTP
+            initialDelaySeconds: 180
+            periodSeconds: 20
+            failureThreshold: 10
+
+      # Volume Definition for Realm Import
+      volumes:
+        - name: realm-import-volume
+          configMap:
+            name: {{ .Values.keycloak.realm.configMapName }}

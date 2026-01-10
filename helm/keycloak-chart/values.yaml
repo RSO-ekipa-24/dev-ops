@@ -1,0 +1,73 @@
+# values.yaml
+# --- Keycloak Application Settings ---
+keycloak:
+  name: keycloak
+  serviceName: keycloak-service
+  replicaCount: 1
+  image:
+    repository: quay.io/keycloak/keycloak
+    tag: 26.4.7 # Pinned to a stable version
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8080
+    targetPort: 8080
+    protocol: TCP
+
+  command: [ "/opt/keycloak/bin/kc.sh" ]
+  args:
+    - start
+    - --import-realm
+
+
+  # --- ENV variables ---
+
+  # Secret references for admin and database credentials
+  secret:
+    name: keycloak-secrets
+    adminPasswordKey: ADMIN_PASSWORD
+    dbPasswordKey: DB_PASSWORD
+
+  # --- Database Configuration (Keycloak side) ---
+  db:
+    name: postgres
+    databaseName: keycloak_db
+    username: keycloak_user
+    host: keycloak-db # DNS name of the PostgreSQL Service
+
+
+  # Proxy Config
+  env:
+    KC_PROXY_HEADERS: "xforwarded"
+    KC_PROXY: edge
+    KC_HOSTNAME: keycloak.myproperty-essa.com
+    KC_PROXY_ADDRESS_FORWARDING: "true"
+    KC_HTTP_ENABLED: "true"
+    KC_HOSTNAME_STRICT: "true"
+    KC_HOSTNAME_STRICT_HTTPS: "true"
+
+  # --- Realm Import ConfigMap Name ---
+  realm:
+    importPath: /opt/keycloak/data/import/quarkus-realm.json
+    configMapName: keycloak-realm-config # Name of the ConfigMap containing quarkus-realm.json
+
+  health:
+    port: 9000
+
+
+# --- PostgreSQL Database Settings (StatefulSet) ---
+postgres:
+  enabled: true
+  name: keycloak-db
+  image: postgres:16
+  service:
+    port: 5432
+  db:
+    databaseName: keycloak_db
+    username: keycloak_user
+  persistence:
+    enabled: true
+    storage: 5Gi
+    accessMode: ReadWriteOnce
+    mountPath: /var/lib/postgresql/data
+    subPath: pgdata

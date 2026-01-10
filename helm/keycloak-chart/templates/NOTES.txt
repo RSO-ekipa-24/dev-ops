@@ -1,0 +1,39 @@
+# templates/NOTES.txt (REVISED)
+
+## 🎉 Keycloak Installation Successful!
+
+### 1. Keycloak Status Check
+You can monitor the status of the Keycloak Deployment using the following command:
+$ kubectl get deployment {{ .Release.Name }}-keycloak -n essa-project
+
+### 2. Database Status Check
+The PostgreSQL StatefulSet status can be checked with:
+$ kubectl get statefulset {{ .Values.postgres.name }} -n essa-project
+
+### 3. External Access (GKE Global Load Balancer)
+
+Keycloak is exposed securely via the GKE Global Load Balancer using a **Google-Managed Certificate** and a **Reserved Static IP**.
+
+A. Access URL (HTTPS Only):
+* Hostname: https://{{ .Values.keycloak.env.KC_HOSTNAME }}
+* Ingress IP Check: $ kubectl get ingress {{ .Release.Name }}-keycloak-ingress -n essa-project
+
+B. Monitoring Certificate Status:
+You must wait for the Managed Certificate to become ACTIVE  before the hostname will resolve.
+$ kubectl describe managedcertificate myproperty-essa-cert -n essa-project
+
+### 4. Important Credentials
+
+Your credentials are stored in the Secret **{{ .Values.keycloak.secret.name }}**.
+
+Keycloak Admin Credentials:
+* Username: admin
+* Password: Use `kubectl get secret {{ .Values.keycloak.secret.name }} -n essa-project -o jsonpath='{.data.{{ .Values.keycloak.secret.adminPasswordKey }} }' | base64 --decode`
+
+PostgreSQL Database Credentials:
+* Username: {{ .Values.keycloak.db.username }}
+* Password: Use `kubectl get secret {{ .Values.keycloak.secret.name }} -n essa-project -o jsonpath='{.data.{{ .Values.keycloak.secret.dbPasswordKey }} }' | base64 --decode`
+
+### 5. BackendConfig provides health checks and other GKE-specific backend settings for keycloak-service
+
+---

@@ -1,0 +1,19 @@
+# templates/tests/test-connection.yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ include "keycloak-chart.fullname" . }}-test-connection"
+  labels:
+  # This will still require "keycloak-chart.labels" to be defined in _helpers.tpl
+    {{- include "keycloak-chart.labels" . | nindent 4 }}
+  annotations:
+    "helm.sh/hook": test
+spec:
+  containers:
+    - name: wget
+      image: busybox
+      command: [ 'wget' ]
+      args:
+        # Corrected Service Name and Port based on our structure
+        - '{{ include "keycloak-chart.fullname" . }}:{{ .Values.keycloak.service.port }}'
+  restartPolicy: Never
