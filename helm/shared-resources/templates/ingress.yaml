@@ -21,4 +21,48 @@ spec:
                 name: {{ .Values.ingress.services.keycloak.serviceName }}
                 port:
                   number: {{ .Values.ingress.services.keycloak.servicePort }}
+
+    - host: {{ .Values.ingress.services.frontend.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.frontend.serviceName }}
+                port:
+                  number: {{ .Values.ingress.services.frontend.servicePort }}
+
+    - host: {{ .Values.ingress.services.core.host }}
+      http:
+        paths:
+            - path: /
+              pathType: Prefix
+              backend:
+                service:
+                  name: {{ .Values.ingress.services.core.serviceName }}
+                  port:
+                    number: {{ .Values.ingress.services.core.servicePort }}
+
+    - host: {{ .Values.ingress.services.files.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.files.serviceName }}
+                port:
+                  number: {{ .Values.ingress.services.files.servicePort }}
+
+    - host: {{ .Values.ingress.services.imageClassification.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.imageClassification.serviceName }}
+                port:
+                  number: {{ .Values.ingress.services.imageClassification.servicePort }}
 {{- end }}
