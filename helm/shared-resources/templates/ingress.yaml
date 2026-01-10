@@ -11,6 +11,16 @@ metadata:
   {{- end }}
 spec:
   rules:
+    - host: {{ .Values.ingress.services.frontend.host }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ .Values.ingress.services.frontend.serviceName }}
+                port:
+                  number: {{ .Values.ingress.services.frontend.servicePort }}
     - host: {{ .Values.ingress.services.keycloak.host }}
       http:
         paths:

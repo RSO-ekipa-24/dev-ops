@@ -9,6 +9,10 @@ ingress:
 
   # keycloak
   services:
+    frontend:
+      host: myproperty-essa.com
+      serviceName: frontend-internal-service
+      servicePort: 80
     keycloak:
       host: keycloak.myproperty-essa.com
       serviceName: keycloak-service
